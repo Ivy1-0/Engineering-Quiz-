@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信号与系统 · BENCH TEST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04070a;
+    --panel:#0a1310;
+    --panel-2:#0d1a15;
+    --grid: rgba(74,222,128,0.065);
+    --green:#4ade80;
+    --green-soft: rgba(74,222,128,0.35);
+    --green-dim:#2f7a54;
+    --amber:#fbbf24;
+    --red:#f87171;
+    --text:#d9f2e1;
+    --text-dim:#6f9683;
+    --border: rgba(74,222,128,0.22);
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+    --disp: 'Share Tech Mono', 'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(74,222,128,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    min-height:100vh;
+    padding:28px 16px 60px;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:repeating-linear-gradient(
+      0deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px,
+      transparent 1px, transparent 3px);
+    pointer-events:none;
+    z-index:200;
+    mix-blend-mode:overlay;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+
+  .wrap{max-width:900px; margin:0 auto;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    border:1px solid var(--border);
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border-radius:6px;
+    padding:22px 24px;
+    margin-bottom:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:22px 22px;
+    pointer-events:none;
+  }
+  .eyebrow{
+    font-family:var(--disp);
+    font-size:11px;
+    letter-spacing:.22em;
+    color:var(--amber);
+    text-transform:uppercase;
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:10px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  h1{
+    font-family:var(--disp);
+    font-size:clamp(26px,5vw,40px);
+    letter-spacing:.03em;
+    margin:0 0 8px;
+    color:var(--text);
+    text-shadow:0 0 18px rgba(74,222,128,0.25);
+  }
+  h1 span{color:var(--green);}
+  .sub{color:var(--text-dim); font-size:13.5px; line-height:1.6; max-width:60ch; position:relative;}
+
+  /* ---------- PANEL / CARD shared ---------- */
+  .panel{
+    border:1px solid var(--border);
+    background:var(--panel);
+    border-radius:6px;
+    padding:20px;
+    position:relative;
+  }
+
+  /* ---------- MENU ---------- */
+  #menu-view .panel{margin-bottom:14px;}
+  .menu-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px; flex-wrap:wrap; gap:6px;}
+  .menu-head h2{font-family:var(--disp); font-size:15px; letter-spacing:.12em; color:var(--text-dim); text-transform:uppercase; margin:0;}
+  .sweep-btn{
+    width:100%;
+    text-align:left;
+    background:linear-gradient(90deg, rgba(74,222,128,0.10), rgba(74,222,128,0.02));
+    border:1px solid var(--green-soft);
+    color:var(--text);
+    border-radius:6px;
+    padding:16px 18px;
+    font-family:var(--mono);
+    cursor:pointer;
+    margin-bottom:16px;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .sweep-btn:hover, .sweep-btn:focus-visible{
+    border-color:var(--green); box-shadow:0 0 0 1px var(--green), 0 0 22px rgba(74,222,128,.18);
+    transform:translateY(-1px);
+  }
+  .sweep-btn b{font-family:var(--disp); font-size:16px; letter-spacing:.04em; color:var(--green);}
+  .sweep-btn .desc{color:var(--text-dim); font-size:12px; display:block; margin-top:3px;}
+  .sweep-btn .arrow{font-size:18px; color:var(--green);}
+
+  .chan-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    gap:10px;
+  }
+  .chan{
+    text-align:left;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:13px 14px;
+    cursor:pointer;
+    color:var(--text);
+    font-family:var(--mono);
+    display:flex; flex-direction:column; gap:5px;
+    transition:transform .12s ease, border-color .12s ease, background .12s ease;
+    position:relative;
+  }
+  .chan:hover, .chan:focus-visible{
+    border-color:var(--green);
+    background:rgba(74,222,128,0.05);
+    transform:translateY(-2px);
+  }
+  .chan .id{font-family:var(--disp); font-size:11px; color:var(--amber); letter-spacing:.14em;}
+  .chan .name{font-size:13.5px; font-weight:600;}
+  .chan .name-cn{font-size:11.5px; color:var(--text-dim);}
+  .chan .meta{font-size:10.5px; color:var(--text-dim); margin-top:2px;}
+  .chan .barwrap{height:3px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; margin-top:4px;}
+  .chan .bar{height:100%; background:var(--green); width:0%; transition:width .4s ease;}
+
+  /* ---------- QUIZ VIEW ---------- */
+  #quiz-view{display:none;}
+  .quiz-top{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:12px; gap:10px; flex-wrap:wrap;
+  }
+  .quiz-top .chan-tag{
+    font-family:var(--disp); font-size:12px; letter-spacing:.12em; color:var(--amber);
+  }
+  .backbtn{
+    background:none; border:1px solid var(--border); color:var(--text-dim);
+    font-family:var(--mono); font-size:11px; padding:6px 10px; border-radius:5px; cursor:pointer;
+  }
+  .backbtn:hover, .backbtn:focus-visible{color:var(--text); border-color:var(--green);}
+
+  .hud{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .hud .cell{
+    border:1px solid var(--border); background:var(--panel-2); border-radius:6px;
+    padding:9px 12px;
+  }
+  .hud .cell .lab{font-size:9.5px; letter-spacing:.14em; color:var(--text-dim); text-transform:uppercase;}
+  .hud .cell .val{font-family:var(--disp); font-size:19px; color:var(--green); margin-top:2px;}
+  .hud .cell.streakcell .val{color:var(--amber);}
+
+  .scope{
+    border:1px solid var(--border);
+    background:radial-gradient(ellipse at 50% 0%, rgba(74,222,128,0.05), transparent 70%), #030604;
+    border-radius:6px;
+    padding:0;
+    margin-bottom:14px;
+    overflow:hidden;
+    position:relative;
+  }
+  .scope svg{display:block; width:100%; height:90px;}
+  .scope .scopegrid-line{stroke:var(--grid); stroke-width:1;}
+  .scope .trace{fill:none; stroke:var(--green); stroke-width:1.6; filter:drop-shadow(0 0 4px rgba(74,222,128,.6));}
+  .scope .midline{stroke:rgba(74,222,128,0.18); stroke-dasharray:3 3;}
+
+  .qpanel{margin-bottom:14px;}
+  .qpanel .qno{font-family:var(--disp); font-size:11px; color:var(--text-dim); letter-spacing:.1em; margin-bottom:8px;}
+  .qpanel .qtext{font-size:15.5px; line-height:1.65; color:var(--text);}
+
+  .opts{display:grid; gap:9px; margin-bottom:14px;}
+  .opt{
+    display:flex; align-items:center; gap:12px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:12px 14px;
+    text-align:left;
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:13.5px;
+    cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .opt:hover:not(.locked), .opt:focus-visible:not(.locked){
+    border-color:var(--green); background:rgba(74,222,128,0.05);
+  }
+  .opt .led{
+    width:9px; height:9px; border-radius:50%;
+    background:rgba(255,255,255,.12);
+    flex:none;
+    border:1px solid rgba(255,255,255,.2);
+  }
+  .opt .lbl{font-family:var(--disp); color:var(--text-dim); font-size:12px; flex:none; width:16px;}
+  .opt.correct{border-color:var(--green); background:rgba(74,222,128,0.10); box-shadow:0 0 0 1px var(--green);}
+  .opt.correct .led{background:var(--green); box-shadow:0 0 8px var(--green); border-color:var(--green);}
+  .opt.wrong{border-color:var(--red); background:rgba(248,113,113,0.08); box-shadow:0 0 0 1px var(--red);}
+  .opt.wrong .led{background:var(--red); box-shadow:0 0 8px var(--red); border-color:var(--red);}
+  .opt.locked{cursor:default;}
+  .opt.dim{opacity:.45;}
+
+  .explain{
+    display:none;
+    border:1px solid var(--border);
+    border-left:3px solid var(--green);
+    background:var(--panel-2);
+    border-radius:0 6px 6px 0;
+    padding:12px 14px;
+    font-size:12.5px;
+    color:var(--text-dim);
+    line-height:1.6;
+    margin-bottom:14px;
+  }
+  .explain b{color:var(--text);}
+  .explain.show{display:block;}
+  .explain.iswrong{border-left-color:var(--red);}
+
+  .nextrow{display:flex; justify-content:flex-end;}
+  .nextbtn{
+    display:none;
+    background:var(--green);
+    color:#04140b;
+    border:none;
+    font-family:var(--disp);
+    font-size:13px;
+    letter-spacing:.08em;
+    padding:11px 22px;
+    border-radius:6px;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .nextbtn:hover{filter:brightness(1.08);}
+  .nextbtn.show{display:inline-block;}
+
+  /* ---------- RESULT VIEW ---------- */
+  #result-view{display:none;}
+  .grade{
+    text-align:center;
+    padding:26px 20px 10px;
+  }
+  .grade .gradeval{
+    font-family:var(--disp);
+    font-size:64px;
+    color:var(--green);
+    text-shadow:0 0 26px rgba(74,222,128,.4);
+    line-height:1;
+  }
+  .grade .gradesub{color:var(--text-dim); font-size:12.5px; margin-top:6px; letter-spacing:.06em;}
+  .stat-row{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+    margin:18px 0;
+  }
+  .stat-row .cell{
+    text-align:center; border:1px solid var(--border); background:var(--panel-2);
+    border-radius:6px; padding:12px 8px;
+  }
+  .stat-row .cell .n{font-family:var(--disp); font-size:22px; color:var(--text);}
+  .stat-row .cell .l{font-size:10px; color:var(--text-dim); letter-spacing:.1em; text-transform:uppercase; margin-top:2px;}
+  .breakdown{margin-top:6px;}
+  .breakdown h3{font-family:var(--disp); font-size:12px; letter-spacing:.12em; color:var(--text-dim); text-transform:uppercase; margin:0 0 10px;}
+  .brow{display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px;}
+  .brow .bname{width:150px; flex:none; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .brow .btrack{flex:1; height:7px; background:rgba(255,255,255,.06); border-radius:4px; overflow:hidden;}
+  .brow .bfill{height:100%; background:var(--green);}
+  .brow.weak .bfill{background:var(--red);}
+  .brow .bpct{width:38px; text-align:right; flex:none; color:var(--text-dim);}
+  .resultbtns{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;}
+  .resultbtns button{
+    flex:1; min-width:150px;
+    font-family:var(--disp); letter-spacing:.06em; font-size:12.5px; text-transform:uppercase;
+    padding:12px; border-radius:6px; cursor:pointer;
+  }
+  .btn-primary{background:var(--green); color:#04140b; border:none;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-secondary{background:transparent; color:var(--text); border:1px solid var(--border);}
+  .btn-secondary:hover{border-color:var(--green);}
+
+  footer{text-align:center; color:var(--text-dim); font-size:10.5px; margin-top:26px; letter-spacing:.06em;}
+
+  :focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+
+  @media (max-width:520px){
+    .hud{grid-template-columns:1fr 1fr; }
+    .hud .cell:nth-child(3){grid-column:1/3;}
+    .stat-row{grid-template-columns:1fr 1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>PRACTICAL EXAM SIMULATOR · 信号与系统</div>
+    <h1>BENCH TEST <span>// 4H 速成核查</span></h1>
+    <div class="sub">选一个通道（章节）单练，或按 <b style="color:var(--green)">SWEEP ALL</b> 混合全频段抽题。每题作答后立即给出示波器式讲解，答错自动记录到「弱点通道」清单。</div>
+  </header>
+
+  <!-- MENU VIEW -->
+  <div id="menu-view">
+    <button class="sweep-btn" id="sweepBtn">
+      <span>
+        <b>▸ SWEEP ALL CHANNELS</b>
+        <span class="desc">12个章节混合随机抽题 · 20 题 · 考前全面自测</span>
+      </span>
+      <span class="arrow">➜</span>
+    </button>
+
+    <div class="panel">
+      <div class="menu-head"><h2>选择通道 / Select Channel</h2><span style="font-size:11px;color:var(--text-dim)" id="menuProgress"></span></div>
+      <div class="chan-grid" id="chanGrid"></div>
+    </div>
+  </div>
+
+  <!-- QUIZ VIEW -->
+  <div id="quiz-view">
+    <div class="quiz-top">
+      <span class="chan-tag" id="quizChanTag">CH00 · —</span>
+      <button class="backbtn" id="exitBtn">◂ 退出到通道选择</button>
+    </div>
+
+    <div class="hud">
+      <div class="cell"><div class="lab">Question</div><div class="val" id="hudQno">1 / 8</div></div>
+      <div class="cell"><div class="lab">Score</div><div class="val" id="hudScore">0</div></div>
+      <div class="cell streakcell"><div class="lab">Streak</div><div class="val" id="hudStreak">0</div></div>
+    </div>
+
+    <div class="scope">
+      <svg viewBox="0 0 400 90" preserveAspectRatio="none" id="scopeSvg">
+        <line class="scopegrid-line" x1="0" y1="15" x2="400" y2="15"></line>
+        <line class="scopegrid-line" x1="0" y1="30" x2="400" y2="30"></line>
+        <line class="scopegrid-line" x1="0" y1="45" x2="400" y2="45"></line>
+        <line class="scopegrid-line" x1="0" y1="60" x2="400" y2="60"></line>
+        <line class="scopegrid-line" x1="0" y1="75" x2="400" y2="75"></line>
+        <line class="midline" x1="0" y1="45" x2="400" y2="45"></line>
+        <polyline class="trace" id="traceLine" points=""></polyline>
+      </svg>
+    </div>
+
+    <div class="panel qpanel">
+      <div class="qno" id="qMeta">CH01 · 常用信号</div>
+      <div class="qtext" id="qText">题干加载中…</div>
+    </div>
+
+    <div class="opts" id="optsWrap"></div>
+
+    <div class="explain" id="explainBox"></div>
+
+    <div class="nextrow"><button class="nextbtn" id="nextBtn">下一题 →</button></div>
+  </div>
+
+  <!-- RESULT VIEW -->
+  <div id="result-view">
+    <div class="panel grade">
+      <div class="gradeval" id="gradeVal">--%</div>
+      <div class="gradesub" id="gradeSub">TEST REPORT</div>
+      <div class="stat-row">
+        <div class="cell"><div class="n" id="resCorrect">0</div><div class="l">Correct</div></div>
+        <div class="cell"><div class="n" id="resTotal">0</div><div class="l">Total</div></div>
+        <div class="cell"><div class="n" id="resStreak">0</div><div class="l">Best Streak</div></div>
+      </div>
+      <div class="breakdown" id="breakdownWrap" style="text-align:left; display:none;">
+        <h3>通道命中率 / Channel Accuracy</h3>
+        <div id="breakdownRows"></div>
+      </div>
+      <div class="resultbtns">
+        <button class="btn-primary" id="retryBtn">重测本通道</button>
+        <button class="btn-secondary" id="menuBtn">返回通道选择</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>SIGNALS &amp; SYSTEMS LAB · 基于蜂考《信号与系统 4小时速成》讲义整理 · 仅供自测复习</footer>
+</div>
+
+<script>
+/* ============ QUESTION BANK ============ */
+const CATS = [
+  {
+    id:"c1", name:"Common Signals", nameCn:"常用信号 · 奇异函数",
+    q:[
+      {q:"信号 f(t)=9e^{-j6t} 属于哪种信号类型？", o:["能量信号","功率信号","非能量非功率信号","都不是"], a:1,
+        e:"该信号具有周期性，其能量 E=∫|f(t)|²dt 为无限大，因此属于<b>功率信号</b>，而非能量信号。"},
+      {q:"冲激信号 δ(t) 的取样（筛选）性质表示为：", o:["f(t)·δ(t) = f(0)·δ(t)","f(t)·δ(t) = f(t)·δ(0)","δ(t)·f(t) = δ(t)","f(t)·δ(t) = 0"], a:0,
+        e:"冲激信号只在 t=0 处取值非零，因此 f(t)·δ(t)=f(0)·δ(t)，同理 f(t)·δ(t−t0)=f(t0)·δ(t−t0)。"},
+      {q:"阶跃信号 u(t) 与冲激信号 δ(t) 的微积分关系是：", o:["δ(t) = du(t)/dt","u(t) = dδ(t)/dt","二者无关","δ(t) = u(t)·t"], a:0,
+        e:"u(t) 是 δ(t) 的积分，反过来 <b>δ(t)=du(t)/dt</b>，即阶跃信号求导得冲激信号。"},
+      {q:"抽样函数 Sa(t)=sin(t)/t 满足以下哪个性质？", o:["∫₋∞^∞ Sa(t)dt = π","Sa(t) 是奇函数","Sa(0) = 0","∫₋∞^∞ Sa(t)dt = 1"], a:0,
+        e:"Sa(t) 是偶函数，Sa(0)=1，且其面积积分满足 <b>∫Sa(t)dt=π</b>，这是常用信号频谱里反复出现的结论。"},
+      {q:"符号函数 sgn(t) 可用阶跃信号表示为：", o:["sgn(t) = 2u(t) − 1","sgn(t) = u(t) − 1","sgn(t) = u(t) + u(−t)","sgn(t) = 2u(t) + 1"], a:0,
+        e:"sgn(t) 在 t>0 为1、t<0为−1，恰好等于阶跃信号整体抬高再压缩：<b>sgn(t)=2u(t)−1</b>。"},
+      {q:"斜变信号 R(t) 与阶跃信号 u(t) 的关系是：", o:["R(t) = ∫₋∞^t u(τ)dτ","R(t) = du(t)/dt","R(t) = u(t)·u(−t)","二者互不相关"], a:0,
+        e:"斜变信号是阶跃信号的一次积分：<b>R(t)=∫u(τ)dτ</b>，反过来 u(t)=dR(t)/dt。"},
+      {q:"计算 ∫₋₅^₋₁ f(t)δ(t−1)dt 的值：", o:["0","f(1)","f(−1)","无法确定"], a:0,
+        e:"冲激 δ(t−1) 位于 t=1，但积分区间是 [−5,−1]，不包含 t=1，因此结果为 <b>0</b>——做冲激积分题一定要先看积分限。"}
+    ]
+  },
+  {
+    id:"c2", name:"Signal Operations", nameCn:"信号的运算 · 卷积",
+    q:[
+      {q:"信号偶分量 f_e(t) 的计算公式是：", o:["½[f(t)+f(−t)]","½[f(t)−f(−t)]","f(t)+f(−t)","f(t)−f(−t)"], a:0,
+        e:"偶分量满足 f_e(t)=f_e(−t)，其求法为 <b>f_e(t)=½[f(t)+f(−t)]</b>，对应奇分量为 ½[f(t)−f(−t)]。"},
+      {q:"卷积 f(t)*δ(t−t0) 的结果是：", o:["f(t−t0)","f(t)","δ(t−t0)","f(t0)"], a:0,
+        e:"与冲激函数卷积等效于时移：<b>f(t)*δ(t−t0)=f(t−t0)</b>，这是卷积性质中最常考的一条。"},
+      {q:"u(t)*u(t) 等于：", o:["t·u(t)","u(t)","t","δ(t)"], a:0,
+        e:"由卷积与积分的关系 f(t)*u(t)=∫₋∞^t f(τ)dτ，代入 f=u(t) 得 <b>u(t)*u(t)=t·u(t)</b>（即斜变信号R(t)）。"},
+      {q:"画 f(−3t−4) 的波形，正确的操作顺序是：", o:["反褶 → 尺度变换 → 时移","时移 → 反褶 → 尺度变换","尺度变换 → 时移 → 反褶","反褶 → 时移 → 尺度变换"], a:0,
+        e:"将 f(−3t−4) 写成 f[−3(t+4/3)]，标准做法是先<b>反褶</b>得 f(−t)，再<b>尺度变换</b>压缩3倍得 f(−3t)，最后<b>时移</b>左移4/3得到最终波形。"},
+      {q:"若 |a|>1，则 f(at) 相对于 f(t) 在时间轴上是：", o:["压缩","拓展","不变","反褶"], a:0,
+        e:"尺度变换规律：f(t)→f(at)，|a|<1 时波形拓展，<b>|a|>1 时波形压缩</b>。"},
+      {q:"卷积积分的定义式是：", o:["f1(t)*f2(t) = ∫f1(τ)f2(t−τ)dτ","f1(t)*f2(t) = ∫f1(t)f2(τ)dτ","f1(t)*f2(t) = f1(t)·f2(t)","f1(t)*f2(t) = ∫f1(τ)f2(τ)dτ"], a:0,
+        e:"卷积定义为 <b>f1(t)*f2(t)=∫₋∞^∞ f1(τ)·f2(t−τ)dτ</b>，图解法即「反褶→时移→相乘→积分」四步。"},
+      {q:"对信号做微分运算时，u′(t) 等于：", o:["δ(t)","u(t)","R(t)","0"], a:0,
+        e:"阶跃信号求导即得冲激信号：<b>u′(t)=δ(t)</b>，这是微分与卷积图解法中最常用的隐含条件。"}
+    ]
+  },
+  {
+    id:"c3", name:"LTI Systems", nameCn:"系统 · 线性时不变",
+    q:[
+      {q:"一个系统要成为线性时不变（LTI）系统，必须同时满足：", o:["叠加性 + 均匀性 + 时不变性","仅需叠加性","仅需时不变性","仅需因果性与稳定性"], a:0,
+        e:"线性 = 叠加性（可加性）+ 均匀性（齐次性），再加上<b>时不变性</b>：输入延时输出同样延时，三者缺一不可才是LTI系统。"},
+      {q:"系统 y(t)=x(−t) 是否为时不变系统？", o:["不是，属于时变系统","是，属于时不变系统","无法判断","仅当x(t)为偶函数时才是"], a:0,
+        e:"设 y(t−t0) 与 T[x(t−t0)]=x(−t−t0) 比较，两者不相等，因此该系统<b>是时变的</b>，尽管它满足线性。"},
+      {q:"系统的全响应可以分解为：", o:["零输入响应 + 零状态响应","仅由激励决定的响应","仅由起始状态决定的响应","以上分解方式都不对"], a:0,
+        e:"全响应 y(t)=y_zi(t)+y_zs(t)：<b>零输入响应</b>仅由起始时刻系统储能产生，<b>零状态响应</b>仅由外加激励产生，二者叠加得到全响应。"},
+      {q:"系统冲激响应 h(t) 与阶跃响应 g(t) 的关系是：", o:["h(t) = dg(t)/dt","h(t) = ∫g(t)dt","h(t) = g(t)","两者无固定关系"], a:0,
+        e:"由 δ(t) 是 u(t) 的导数、系统又是线性时不变的可得 <b>h(t)=dg(t)/dt</b>，同理 g(t)=∫h(τ)dτ。"},
+      {q:"全响应中的「自由响应」是由什么决定的？", o:["系统函数（特征方程）的极点","激励信号的极点","初始条件的具体数值","系统是否稳定"], a:0,
+        e:"齐次解（自由响应）的形式由<b>系统函数极点</b>决定，而其系数大小才由起始条件确定；强迫响应则由激励信号的极点（特解）决定。"},
+      {q:"零输入响应仅由什么产生？", o:["起始时刻系统的储能（不含外加激励）","外加激励信号","激励和储能共同作用","系统是否为因果系统"], a:0,
+        e:"零输入响应定义为没有外加激励作用，<b>仅由起始时刻系统储能</b>产生的响应，求解时需令激励 x(t)=0。"}
+    ]
+  },
+  {
+    id:"c4", name:"Fourier Series", nameCn:"傅里叶级数",
+    q:[
+      {q:"周期信号傅里叶级数中的 a0 代表：", o:["信号的直流分量","基波幅度","初相位","总能量"], a:0,
+        e:"a0 = (1/T1)∫f(t)dt，即一个周期内波形下面积除以周期，代表<b>直流分量</b>。"},
+      {q:"若周期信号为奇函数，其傅里叶级数展开式中只可能含有：", o:["正弦分量","余弦分量","直流分量","偶次谐波"], a:0,
+        e:"奇函数 f(−t)=−f(t)，展开式中直流项与余弦项（偶函数）必须为零，只保留<b>正弦分量</b>。"},
+      {q:"若周期信号为偶函数，其展开式中含有：", o:["直流分量 + 余弦分量","仅正弦分量","仅奇次谐波","仅偶次谐波"], a:0,
+        e:"偶函数 f(−t)=f(t)，展开式只保留偶对称的<b>直流分量和余弦分量</b>，正弦项系数全部为零。"},
+      {q:"「奇谐函数」（半波对称、上下翻转后波形取反）的傅里叶级数只含有：", o:["奇次谐波分量","偶次谐波分量","仅直流分量","仅基波分量"], a:0,
+        e:"奇谐函数满足 f(t)=−f(t+T/2)，展开式中偶次谐波（含直流）全部抵消，只剩<b>奇次谐波分量</b>。"},
+      {q:"「偶谐函数」（半波对称、平移半周期后波形不变）的傅里叶级数含有：", o:["直流分量 + 偶次谐波分量","仅奇次谐波","仅正弦分量","仅余弦分量"], a:0,
+        e:"偶谐函数满足 f(t)=f(t+T/2)，其周期实为 T/2，展开式中只含<b>直流和偶次谐波分量</b>。"},
+      {q:"指数形式傅里叶系数 Fn 与三角形式系数 an、bn 的关系是：", o:["Fn = ½(an − jbn)","Fn = an + jbn","Fn = an − bn","Fn = 2(an + jbn)"], a:0,
+        e:"由欧拉公式展开可推得 <b>Fn=½(an−jbn)</b>，且 |Fn|=½√(an²+bn²)。"},
+      {q:"周期信号频谱的三大特点是：", o:["离散性、谐波性、收敛性","连续性、周期性、对称性","离散性、周期性、单调性","收敛性、对称性、周期性"], a:0,
+        e:"周期信号的傅里叶级数展开决定了其频谱具有<b>离散性（谱线间隔Ω1）、谐波性（均为基波整数倍）、收敛性</b>三大特点。"}
+    ]
+  },
+  {
+    id:"c5", name:"FT of Common Signals", nameCn:"傅里叶变换 · 常用信号",
+    q:[
+      {q:"单边指数脉冲 Ee^{−αt}u(t)（α>0）的傅里叶变换是：", o:["E/(α+jΩ)","E/(α−jΩ)","Eα/(jΩ)","E·α"], a:0,
+        e:"这是最基础的傅氏变换对之一：<b>F(jΩ)=E/(α+jΩ)</b>，幅频特性在Ω=0处最大、随频率升高而衰减。"},
+      {q:"冲激函数 Eδ(t) 的傅里叶变换是：", o:["常数 E（所有频率分量均匀分布）","Eδ(Ω)","E/(jΩ)","2πEδ(Ω)"], a:0,
+        e:"冲激信号包含所有频率成分且幅度均匀，其频谱为<b>常数 E</b>，这体现了时域「窄」对应频域「宽」的对偶规律。"},
+      {q:"直流信号（常数）E 的傅里叶变换是：", o:["2πEδ(Ω)","E","E/(jΩ)","πEδ(Ω)"], a:0,
+        e:"与冲激函数相反，直流信号在频域只有一根谱线：<b>F(jΩ)=2πEδ(Ω)</b>，体现时域「宽」对应频域「窄」。"},
+      {q:"单位阶跃信号 u(t) 的傅里叶变换是：", o:["πδ(Ω) + 1/(jΩ)","1/(jΩ)","πδ(Ω)","2πδ(Ω)"], a:0,
+        e:"u(t) 含有直流分量，因此其频谱除了 1/(jΩ) 之外还多出一个冲激项：<b>F(jΩ)=πδ(Ω)+1/(jΩ)</b>。"},
+      {q:"矩形脉冲（幅度E、宽度τ，对称于原点）的傅里叶变换是：", o:["EτSa(Ωτ/2)","E/τ","Eτ","ESa(τ)"], a:0,
+        e:"矩形脉冲频谱是抽样函数型：<b>F(jΩ)=EτSa(Ωτ/2)</b>，第一个过零点在 Ω=2π/τ 处，脉宽τ越窄频谱主瓣越宽。"},
+      {q:"余弦信号 Ecos(Ω0t) 的傅里叶变换是：", o:["Eπ[δ(Ω+Ω0)+δ(Ω−Ω0)]","jEπ[δ(Ω+Ω0)−δ(Ω−Ω0)]","Eδ(Ω0)","E/Ω0"], a:0,
+        e:"余弦信号是偶函数，其频谱为实数、对称分布的一对冲激：<b>F(jΩ)=Eπ[δ(Ω+Ω0)+δ(Ω−Ω0)]</b>；正弦信号则对应虚数一对冲激。"}
+    ]
+  },
+  {
+    id:"c6", name:"FT Properties", nameCn:"傅里叶变换性质",
+    q:[
+      {q:"时移特性：f(t−t0) 对应的频谱是：", o:["F(jΩ)·e^{−jΩt0}","F(jΩ)·e^{jΩt0}","F(jΩ−t0)","F(jΩ)+t0"], a:0,
+        e:"时域延时只改变相位，不改变幅度：<b>F(jΩ)e^{−jΩt0}</b>，幅频特性不变，相频特性叠加一个线性项 −Ωt0。"},
+      {q:"频移特性：f(t)·e^{jΩ0t} 对应的频谱是：", o:["F[j(Ω−Ω0)]","F(jΩ)+Ω0","F(jΩ)·e^{jΩ0}","2F[j(Ω+Ω0)]"], a:0,
+        e:"时域乘以复指数等效于频谱整体搬移：<b>F[j(Ω−Ω0)]</b>，这正是调制（上变频）的数学基础。"},
+      {q:"尺度变换特性：信号在时域上被压缩，则其频谱在频域上：", o:["展宽","压缩","不变","反褶"], a:0,
+        e:"由 f(at)→(1/|a|)F(jΩ/a) 可知，|a|>1（时域压缩）对应<b>频域展宽</b>，这是「时宽频窄」规律的直接体现。"},
+      {q:"时域卷积定理：f1(t)*f2(t) 对应的频域运算是：", o:["F1(jΩ)·F2(jΩ)","F1(jΩ)+F2(jΩ)","F1(jΩ)*F2(jΩ)","F1(jΩ)/F2(jΩ)"], a:0,
+        e:"「一个域卷积，另一个域相乘」：时域卷积 ↔ 频域<b>相乘</b> F1(jΩ)·F2(jΩ)。"},
+      {q:"频域卷积定理：f1(t)·f2(t) 对应的频域运算是：", o:["(1/2π)·F1(jΩ)*F2(jΩ)","F1(jΩ)·F2(jΩ)","F1(jΩ)+F2(jΩ)","2π·F1*F2"], a:0,
+        e:"与上一条对称：时域相乘 ↔ 频域<b>卷积再除以2π</b>，即 (1/2π)F1(jΩ)*F2(jΩ)，调制解调分析常用到这一条。"},
+      {q:"帕斯瓦尔（Parseval）定理说明了什么？", o:["信号在时域与频域的能量守恒","时域幅度等于频域幅度","信号必须是周期信号","频谱一定是实函数"], a:0,
+        e:"∫|f(t)|²dt = (1/2π)∫|F(jΩ)|²dΩ，表明<b>能量在时域与频域计算结果相同</b>，即能量守恒定理。"}
+    ]
+  },
+  {
+    id:"c7", name:"Sampling & Modulation", nameCn:"无失真传输 · 采样 · 调制",
+    q:[
+      {q:"实现无失真传输，系统频率响应需满足什么条件？", o:["|H(jΩ)|=k（常数）且相位 φ(Ω)=−Ωt0（线性相位）","|H(jΩ)|恒等于1","φ(Ω)恒等于0","H(jΩ)必须是纯虚数"], a:0,
+        e:"无失真传输要求响应与激励只差幅度和延时，对应频域条件为<b>幅频特性为常数、相频特性对Ω呈线性</b>（H(jΩ)=k·e^{−jΩt0}）。"},
+      {q:"奈奎斯特采样定理要求采样角频率 Ωs 与信号最高频率 Ωm 满足：", o:["Ωs > 2Ωm","Ωs = Ωm","Ωs < 2Ωm","两者无关"], a:0,
+        e:"只有<b>Ωs>2Ωm</b>时采样后的频谱才不发生混叠，才能通过低通滤波器恢复原信号，2Ωm 称为奈奎斯特采样率。"},
+      {q:"将信号乘以 cos(Ω0t) 再通过带通滤波器提取边带，实现的是：", o:["调制（把频谱搬移到载频附近，即上变频）","解调（把频谱搬回基带）","采样","微分运算"], a:0,
+        e:"乘以载波并将频谱一分为二左右搬移到±Ω0附近，是典型的<b>调制（上变频）</b>过程；再乘一次载波并低通滤波则是解调（下变频）。"},
+      {q:"对信号采样后，其频谱相对原信号频谱的变化是：", o:["以采样频率Ωs为间隔周期延拓","被压缩","被反褶","被积分一次"], a:0,
+        e:"冲激采样在时域相当于乘以冲激串，对应频域是与冲激串频谱卷积，结果是原频谱<b>以Ωs为周期反复延拓</b>。"},
+      {q:"信号 x(t)=x1(t)+x2(t2)，若x1、x2最高频率均为f0，对x(t)+x(2t)类混合信号抽样时需特别注意：", o:["先求出复合信号实际的最高频率再确定奈奎斯特间隔","直接用f0计算即可，无需处理复合信号","抽样间隔与最高频率无关","只需按最低频率计算"], a:0,
+        e:"对形如 f(t)+f(2t) 的复合信号，f(2t) 因尺度压缩使最高频率变为 2f0，因此整体最高频率应取<b>各分量中的最大值</b>，再据此计算奈奎斯特间隔。"}
+    ]
+  },
+  {
+    id:"c8", name:"Laplace Transform", nameCn:"拉普拉斯变换基础",
+    q:[
+      {q:"令 σ+jΩ=s，由傅里叶变换推广得到的单边拉氏变换定义为：", o:["F(s) = ∫₀⁻^∞ f(t)·e^{−st}dt","F(s) = ∫f(t)·e^{st}dt","F(s) = ∫f(t)·e^{−jΩt}dt","F(s) = ∫F(s)·e^{st}ds"], a:0,
+        e:"拉氏变换是傅里叶变换在复频率 s=σ+jΩ 上的推广：<b>F(s)=∫₀⁻^∞ f(t)e^{−st}dt</b>，收敛域比傅氏变换更宽。"},
+      {q:"一个连续时间信号存在拉氏变换，是否一定也存在傅里叶变换？", o:["不一定，只有收敛域包含s=jΩ轴时才存在","一定存在","一定不存在","仅当信号是周期信号时才存在"], a:0,
+        e:"拉氏变换是傅氏变换的拓展，只有当拉氏变换<b>收敛域包含虚轴 s=jΩ</b> 时，令 F(jΩ)=F(s)|_{s=jΩ} 才能得到傅里叶变换。"},
+      {q:"e^{−αt}u(t) 的单边拉氏变换是：", o:["1/(s+α)","1/(s−α)","α/(s+α)","s/(s+α)"], a:0,
+        e:"最基础的拉氏变换对：<b>F(s)=1/(s+α)</b>，收敛域 σ>−α。"},
+      {q:"δ(t) 的拉氏变换是：", o:["1","0","1/s","s"], a:0,
+        e:"冲激函数拉氏变换为<b>常数1</b>，收敛域为整个s平面（σ>−∞）。"},
+      {q:"拉氏变换的时域微分性质：L[df(t)/dt] 等于：", o:["sF(s) − f(0⁻)","F(s)/s","sF(s)","f(0⁻)·F(s)"], a:0,
+        e:"时域求导对应 s 域运算：<b>sF(s)−f(0⁻)</b>，这一性质是列写微分方程s域解法的关键工具。"},
+      {q:"终值定理 lim_{t→∞}f(t)=lim_{s→0}sF(s) 成立的前提条件是：", o:["F(s)的极点全部在左半s平面，或在虚轴上只有一个一阶极点","F(s)是真分式即可，无其他条件","任何F(s)都成立","F(s)极点必须在右半平面"], a:0,
+        e:"必须先判断终值是否存在：只有当 <b>F(s)极点全在左半s平面，或虚轴上仅有一个一阶极点</b> 时终值定理才适用，否则不能直接套用。"}
+    ]
+  },
+  {
+    id:"c9", name:"System Function H(s)", nameCn:"系统函数 · 零极点 · 稳定性",
+    q:[
+      {q:"连续系统稳定的充要条件（S域）是：", o:["H(s)的全部极点位于左半s平面","H(s)的全部零点位于左半s平面","H(s)在虚轴上有一个极点即可","极点必须全为实数"], a:0,
+        e:"系统稳定要求冲激响应h(t)绝对可积，对应到S域即<b>H(s)全部极点都在左半s平面</b>，h(t)呈衰减形式。"},
+      {q:"全通系统的定义与特点是：", o:["极点在左半平面、零点在右半平面且零极点关于jΩ轴对称，幅频特性为常数","极点和零点都在左半平面","系统没有任何极点","幅频特性随频率单调增大"], a:0,
+        e:"全通系统的全部极点在左半s平面、全部零点在右半s平面，且零极点关于jΩ轴镜像对称，因此<b>幅频特性 |H(jΩ)| 恒为常数</b>，只改变相位。"},
+      {q:"最小相位系统要求：", o:["零点仅位于左半s平面或jΩ轴上","极点仅位于右半s平面","零点必须全部位于右半平面","系统不能有零点"], a:0,
+        e:"最小相位系统的定义是<b>零点仅位于左半s平面或jΩ轴上</b>（极点本身就必须在左半平面才稳定），它是相移最小的一类系统。"},
+      {q:"临界稳定系统的时域特征是：", o:["虚轴上有一阶极点、其余极点在左半平面，冲激响应呈等幅振荡或趋于常数","所有极点都在右半平面，响应发散","冲激响应呈指数衰减","系统完全没有极点"], a:0,
+        e:"临界稳定介于稳定与不稳定之间：<b>虚轴上存在一阶极点</b>（其余极点在左半平面）时，h(t)表现为等幅振荡或趋于常数，既不收敛也不发散。"},
+      {q:"系统函数 H(s)=Y(s)/X(s) 的定义是：", o:["零状态响应的拉氏变换与激励拉氏变换之比","零输入响应与激励之比","全响应与激励之比","初始条件与激励之比"], a:0,
+        e:"系统函数专门描述系统本身特性，定义为<b>零状态响应的拉氏变换 / 激励的拉氏变换</b>，与初始状态无关。"},
+      {q:"冲激响应 h(t) 与系统函数 H(s) 的关系是：", o:["H(s) 是 h(t) 的拉氏变换","h(t) 是 H(s) 的积分","二者没有固定关系","H(s) = h(t) 乘以 s"], a:0,
+        e:"冲激响应是激励为δ(t)时的零状态响应，由 L[δ(t)]=1 可知 <b>H(s)=L[h(t)]</b>，即h(t)与H(s)构成一对拉氏变换对。"}
+    ]
+  },
+  {
+    id:"c10", name:"Block Diagrams", nameCn:"系统框图 · 信号流图",
+    q:[
+      {q:"系统框图中的积分器在s域中对应的运算是：", o:["乘以1/s，再加上初始状态项 y(0)/s","直接乘以s","做单位延迟","变成一个加法器"], a:0,
+        e:"S域中积分器等效于 <b>1/s</b> 加上起始状态贡献 y(0)/s：Y(s)=(1/s)X(s)+(1/s)y(0)，这是S域求解含初值电路/系统的基础模块。"},
+      {q:"信号流图的「并联形式」对应的系统函数写法是：", o:["H(s) = C + H1(s) + H2(s) + ⋯ + Hk(s)","H(s) = H1(s)·H2(s)·⋯·Hk(s)","H(s) = H1(s)/H2(s)","H(s) = H1(s) − H2(s)"], a:0,
+        e:"并联形式来自部分分式展开，把系统函数拆成若干个一阶/二阶环节<b>相加</b>：H(s)=C+H1(s)+…+Hk(s)。"},
+      {q:"信号流图的「级联形式」对应的系统函数写法是：", o:["H(s) = A0·H1(s)·H2(s)·⋯·Hk(s)","H(s) = A0 + H1(s) + H2(s)","H(s) 与各环节顺序无关且只能相加","无法用级联表示系统函数"], a:0,
+        e:"级联形式把系统函数因式分解为若干环节依次<b>相乘</b>：H(s)=A0·H1(s)·H2(s)⋯Hk(s)，对应各环节依次串联。"},
+      {q:"一个非最小相位系统在理论上可以等效替换为：", o:["最小相位系统与全通系统的级联","仅用一个全通系统即可等效","仅用一个最小相位系统即可等效","无法用其他系统等效替代"], a:0,
+        e:"定理：任意非最小相位系统都可以分解为<b>最小相位系统与全通系统级联</b>的形式，这是频响分析中的重要结论。"}
+    ]
+  },
+  {
+    id:"c11", name:"Z-Transform Basics", nameCn:"Z变换基础",
+    q:[
+      {q:"序列的单边Z变换定义为：", o:["X(z) = Σ_{n=0}^{∞} x[n]·z^{−n}","X(z) = Σ_{n=−∞}^{∞} x[n]·z^{n}","X(z) = ∫x(t)·z^{−t}dt","X(z) 就是 x[n] 的傅里叶变换"], a:0,
+        e:"单边Z变换定义为 <b>X(z)=Σ_{n=0}^{∞} x[n]z^{−n}</b>，收敛域是某个圆外或圆环区域，必须连同收敛域一起才能唯一确定原序列。"},
+      {q:"右边序列（因果或右移序列）的Z变换收敛域通常表示为：", o:["|z| > |a|","|z| < |a|","|z| = |a|","收敛域为整个z平面"], a:0,
+        e:"右边序列（如 aⁿu[n]）的收敛域形如<b>|z|>|a|</b>（圆外区域）；左边序列（如 −aⁿu[−n−1]）则相反，收敛域为|z|<|a|。"},
+      {q:"单位样值信号 δ[n] 的Z变换是：", o:["1（|z|≥0）","z","1/z","0"], a:0,
+        e:"δ[n]只在n=0处取1，代入定义式立得 <b>Z[δ[n]]=1</b>，收敛域为整个z平面。"},
+      {q:"序列 aⁿu[n] 的Z变换是：", o:["z/(z−a)，|z|>|a|","z/(z−a)，|z|<|a|","1/(z−a)","a/(z−a)"], a:0,
+        e:"这是最基础的Z变换对：<b>Z[aⁿu[n]] = z/(z−a)，收敛域|z|>|a|</b>，对应左边序列则是 −aⁿu[−n−1]→z/(z−a)，|z|<|a|。"},
+      {q:"求逆Z变换（部分分式法）时，通常需要先对哪个表达式做部分分式展开？", o:["X(z)/z","直接展开X(z)本身，无需除以z","X(z)·z","1/X(z)"], a:0,
+        e:"标准套路是先展开 <b>X(z)/z</b>（因为常用Z变换对形如 z/(z−a)），再把展开结果乘回z，最后查表得原序列，注意结合收敛域判断左/右边序列。"}
+    ]
+  },
+  {
+    id:"c12", name:"Discrete System H(z)", nameCn:"离散系统 · H(z)",
+    q:[
+      {q:"离散LTI系统稳定的充要条件是H(z)的收敛域：", o:["包含单位圆 |z|=1","不包含单位圆","是整个z平面","仅为原点"], a:0,
+        e:"与连续系统「极点全在左半平面」对应，离散系统稳定要求 <b>H(z)的收敛域包含单位圆</b>。"},
+      {q:"判断因果系统时，H(z)的收敛域通常呈现的形式是：", o:["|z| > a（某圆的外部区域）","|z| < a（某圆的内部区域）","一个环形区域","整个z平面"], a:0,
+        e:"因果系统的单位样值响应h[n]是因果序列（右边序列），因此其Z变换收敛域必为<b>某个圆外部 |z|>a</b>，且不含az^m（m>0）项。"},
+      {q:"Z变换的时移性质：x[n−1]u[n] 对应的Z变换是：", o:["z^{−1}X(z) + x[−1]","z·X(z)","X(z) − x[−1]","zX(z) + z^{−1}"], a:0,
+        e:"单边Z变换的时移性质需要考虑边界项：<b>Z[x[n−1]u[n]] = z^{−1}X(z) + x[−1]</b>，这是差分方程求解题的核心工具。"},
+      {q:"Z变换的卷积定理：x[n]*h[n] 对应的Z域运算是：", o:["X(z)·H(z)","X(z) + H(z)","X(z)/H(z)","X(z) − H(z)"], a:0,
+        e:"和连续系统类似，时域卷积对应Z域<b>相乘</b>：Z[x[n]*h[n]]=X(z)·H(z)，这是Y(z)=X(z)H(z)求零状态响应的依据。"},
+      {q:"对因果序列，初值定理给出 x[0] 等于：", o:["lim_{z→∞} X(z)","lim_{z→0} X(z)","lim_{z→1} X(z)","X(1)"], a:0,
+        e:"初值定理：<b>x[0] = lim_{z→∞} X(z)</b>，把X(z)展开成z的降幂多项式，最高次项系数即为初值。"},
+      {q:"离散系统频率响应 H(e^{jω}) 存在的条件是：", o:["H(z)的收敛域包含单位圆","H(z)在虚轴上有极点","系统必须是非因果系统","H(z)极点全部在单位圆外"], a:0,
+        e:"令 z=e^{jω} 求频响的前提是该点在收敛域内，因此<b>H(z)收敛域包含单位圆</b>是频率响应存在的必要条件，本质上等价于系统稳定。"}
+    ]
+  }
+];
+
+/* ============ STATE ============ */
+let state = {
+  mode:null,        // 'single' | 'sweep'
+  catId:null,
+  queue:[],          // array of {catIdx, qIdx, ...question, catName}
+  idx:0,
+  score:0,
+  streak:0,
+  bestStreak:0,
+  answered:false,
+  history:[],        // trace history values
+  phase:0,
+  catStats:{}         // for sweep: {catName:{correct,total}}
+};
+
+/* progress persisted in-memory only (per session) */
+let bestPerCat = {}; // catId -> best % this session
+
+/* ============ DOM ============ */
+const menuView = document.getElementById('menu-view');
+const quizView = document.getElementById('quiz-view');
+const resultView = document.getElementById('result-view');
+const chanGrid = document.getElementById('chanGrid');
+const menuProgress = document.getElementById('menuProgress');
+
+/* build channel grid */
+function buildMenu(){
+  chanGrid.innerHTML = '';
+  CATS.forEach((c,i)=>{
+    const btn = document.createElement('button');
+    btn.className='chan';
+    const idTag = 'CH'+String(i+1).padStart(2,'0');
+    const pct = bestPerCat[c.id]!==undefined ? bestPerCat[c.id] : null;
+    btn.innerHTML = `
+      <span class="id">${idTag} · ${c.q.length} Q</span>
+      <span class="name">${c.name}</span>
+      <span class="name-cn">${c.nameCn}</span>
+      <span class="meta">${pct!==null ? '最佳成绩 '+pct+'%' : '尚未测试'}</span>
+      <span class="barwrap"><span class="bar" style="width:${pct||0}%"></span></span>
+    `;
+    btn.addEventListener('click',()=>startQuiz('single', c.id));
+    chanGrid.appendChild(btn);
+  });
+  const totalQ = CATS.reduce((s,c)=>s+c.q.length,0);
+  menuProgress.textContent = `共 ${CATS.length} 通道 · 题库 ${totalQ} 题`;
+}
+buildMenu();
+
+document.getElementById('sweepBtn').addEventListener('click',()=>startQuiz('sweep'));
+document.getElementById('exitBtn').addEventListener('click', ()=>{ switchView('menu'); });
+document.getElementById('menuBtn').addEventListener('click', ()=>{ switchView('menu'); });
+document.getElementById('retryBtn').addEventListener('click', ()=>{
+  if(state.mode==='sweep') startQuiz('sweep');
+  else startQuiz('single', state.catId);
+});
+document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+
+function switchView(v){
+  menuView.style.display = v==='menu' ? 'block':'none';
+  quizView.style.display = v==='quiz' ? 'block':'none';
+  resultView.style.display = v==='result' ? 'block':'none';
+  if(v==='menu') buildMenu();
+}
+
+/* ============ QUIZ SETUP ============ */
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function startQuiz(mode, catId){
+  state.mode = mode;
+  state.catId = catId || null;
+  state.idx = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.answered = false;
+  state.history = [];
+  state.phase = 0;
+  state.catStats = {};
+
+  let pool = [];
+  if(mode==='single'){
+    const cat = CATS.find(c=>c.id===catId);
+    cat.q.forEach((q,qi)=>pool.push({...q, catName:cat.name, catId:cat.id}));
+    pool = shuffle(pool);
+  } else {
+    CATS.forEach(cat=>{
+      cat.q.forEach(q=>pool.push({...q, catName:cat.name, catId:cat.id}));
+    });
+    pool = shuffle(pool).slice(0, Math.min(20, pool.length));
+  }
+  state.queue = pool;
+
+  document.getElementById('quizChanTag').textContent = mode==='sweep'
+    ? '⟁ SWEEP ALL CHANNELS'
+    : ('CH'+String(CATS.findIndex(c=>c.id===catId)+1).padStart(2,'0')+' · '+CATS.find(c=>c.id===catId).nameCn);
+
+  initTrace();
+  switchView('quiz');
+  renderQuestion();
+}
+
+/* ============ SCOPE TRACE ============ */
+const traceLine = document.getElementById('traceLine');
+const N_POINTS = 60;
+
+function initTrace(){
+  state.history = new Array(N_POINTS).fill(0).map((_,i)=>({v:0}));
+  drawTrace();
+}
+
+function pushTrace(correct, streakAtHit){
+  if(correct){
+    // smooth growing sine burst
+    const amp = Math.min(34, 10 + streakAtHit*4);
+    for(let k=0;k<6;k++){
+      state.phase += 0.9;
+      const v = Math.sin(state.phase)*amp*(k/6+0.3);
+      state.history.push({v});
+    }
+  } else {
+    // glitch burst: jagged noise
+    for(let k=0;k<6;k++){
+      const v = (Math.random()-0.5)*70;
+      state.history.push({v});
+    }
+    state.phase = 0;
+  }
+  while(state.history.length>N_POINTS) state.history.shift();
+  drawTrace();
+}
+
+function drawTrace(){
+  const w=400, h=90, mid=45;
+  const step = w/(N_POINTS-1);
+  const pts = state.history.map((p,i)=>{
+    const x = i*step;
+    const y = mid - p.v*0.9;
+    return `${x.toFixed(1)},${Math.max(2,Math.min(88,y)).toFixed(1)}`;
+  }).join(' ');
+  traceLine.setAttribute('points', pts);
+}
+
+/* idle gentle animation between answers */
+let idleTimer=null;
+function idleTick(){
+  state.phase += 0.12;
+  const last = state.history[state.history.length-1]?.v || 0;
+  const v = last*0.9 + Math.sin(state.phase*0.5)*1.2;
+  state.history.push({v});
+  while(state.history.length>N_POINTS) state.history.shift();
+  drawTrace();
+}
+function startIdle(){ stopIdle(); idleTimer=setInterval(idleTick, 90); }
+function stopIdle(){ if(idleTimer) clearInterval(idleTimer); }
+startIdle();
+
+/* ============ RENDER QUESTION ============ */
+function renderQuestion(){
+  state.answered=false;
+  const total = state.queue.length;
+  const q = state.queue[state.idx];
+
+  document.getElementById('hudQno').textContent = `${state.idx+1} / ${total}`;
+  document.getElementById('hudScore').textContent = state.score;
+  document.getElementById('hudStreak').textContent = state.streak;
+
+  document.getElementById('qMeta').textContent =
+    (state.mode==='sweep' ? '⟁ '+q.catName : q.catName) + '  ·  Q'+(state.idx+1);
+  document.getElementById('qText').textContent = q.q;
+
+  const optsWrap = document.getElementById('optsWrap');
+  optsWrap.innerHTML='';
+  const letters=['A','B','C','D'];
+  q.o.forEach((optText, oi)=>{
+    const b = document.createElement('button');
+    b.className='opt';
+    b.innerHTML = `<span class="led"></span><span class="lbl">${letters[oi]}</span><span class="txt">${optText}</span>`;
+    b.addEventListener('click',()=>selectAnswer(oi));
+    optsWrap.appendChild(b);
+  });
+
+  const exp = document.getElementById('explainBox');
+  exp.classList.remove('show','iswrong');
+  exp.innerHTML='';
+
+  document.getElementById('nextBtn').classList.remove('show');
+}
+
+function selectAnswer(oi){
+  if(state.answered) return;
+  state.answered = true;
+  stopIdle();
+
+  const q = state.queue[state.idx];
+  const opts = document.querySelectorAll('.opt');
+  const correct = (oi===q.a);
+
+  opts.forEach((el,i)=>{
+    el.classList.add('locked');
+    if(i===q.a) el.classList.add('correct');
+    if(i===oi && !correct) el.classList.add('wrong');
+    if(i!==oi && i!==q.a) el.classList.add('dim');
+  });
+
+  // stats
+  if(!state.catStats[q.catName]) state.catStats[q.catName]={correct:0,total:0};
+  state.catStats[q.catName].total++;
+
+  if(correct){
+    state.score++;
+    state.streak++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    state.catStats[q.catName].correct++;
+    pushTrace(true, state.streak);
+  } else {
+    state.streak = 0;
+    pushTrace(false, 0);
+  }
+
+  document.getElementById('hudScore').textContent = state.score;
+  document.getElementById('hudStreak').textContent = state.streak;
+
+  const exp = document.getElementById('explainBox');
+  exp.classList.add('show');
+  if(!correct) exp.classList.add('iswrong');
+  exp.innerHTML = (correct ? '✔ 正确 — ' : '✘ 错误，正确答案是 '+['A','B','C','D'][q.a]+' — ') + q.e;
+
+  document.getElementById('nextBtn').classList.add('show');
+  document.getElementById('nextBtn').textContent = (state.idx+1 < state.queue.length) ? '下一题 →' : '查看测试报告 →';
+}
+
+function nextQuestion(){
+  state.idx++;
+  if(state.idx >= state.queue.length){
+    showResult();
+    return;
+  }
+  renderQuestion();
+  startIdle();
+}
+
+/* ============ RESULTS ============ */
+function showResult(){
+  stopIdle();
+  const total = state.queue.length;
+  const pct = Math.round((state.score/total)*100);
+
+  if(state.mode==='single' && state.catId){
+    bestPerCat[state.catId] = Math.max(bestPerCat[state.catId]||0, pct);
+  }
+
+  document.getElementById('gradeVal').textContent = pct+'%';
+  let sub='TEST REPORT';
+  if(pct>=90) sub='EXCELLENT · 满量程通过';
+  else if(pct>=75) sub='SOLID · 信号清晰，稳态良好';
+  else if(pct>=55) sub='NEEDS TUNING · 建议重新校准';
+  else sub='NOISY · 建议回炉重听讲义';
+  document.getElementById('gradeSub').textContent = sub;
+
+  document.getElementById('resCorrect').textContent = state.score;
+  document.getElementById('resTotal').textContent = total;
+  document.getElementById('resStreak').textContent = state.bestStreak;
+
+  const bd = document.getElementById('breakdownWrap');
+  const rows = document.getElementById('breakdownRows');
+  rows.innerHTML='';
+  const cats = Object.keys(state.catStats);
+  if(state.mode==='sweep' && cats.length>1){
+    bd.style.display='block';
+    cats.sort((a,b)=> (state.catStats[a].correct/state.catStats[a].total) - (state.catStats[b].correct/state.catStats[b].total));
+    cats.forEach(name=>{
+      const s = state.catStats[name];
+      const p = Math.round((s.correct/s.total)*100);
+      const row = document.createElement('div');
+      row.className='brow'+(p<60?' weak':'');
+      row.innerHTML = `<span class="bname">${name}</span><span class="btrack"><span class="bfill" style="width:${p}%"></span></span><span class="bpct">${p}%</span>`;
+      rows.appendChild(row);
+    });
+  } else {
+    bd.style.display='none';
+  }
+
+  switchView('result');
+}
+</script>
+</body>
+</html>
